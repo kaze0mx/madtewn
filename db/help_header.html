@@ -1,0 +1,84 @@
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <title>Aide du bot</title>
+        <link rel='stylesheet' type='text/css' href='./style.css'/>
+        </head>
+        <body>
+<h1>À propos</h1>
+<h2>Introduction</h2>
+<p>
+Ce bot est basé sur le code de mad2n, un bot développé par <a href="mailto:kaze[AROBASE]neoliage[POINT]fr">kaze</a>, cf. <a href='http://lerhino.fr:5678'>http://lerhino.fr:5678</a>. Le code source est disponible à l'adresse <a href='http://lerhino.fr:5678/sources.zip'>http://lerhino.fr:5678/sources.zip</a>. L'archive est toujours à jour (créée dynamiquement) et ne contient pas les markovs ni les logs pour des raisons de confidentialité. Pour voir mad2n en action, viendez sur #fat@irc.epiknet.org.
+</p><p>
+Le bot est un agent conversationnel composé d'un ensemble de <b>channels</b>, de <b>modules</b>, chargés dynamiquement, et de <b>règles</b>. Le bot peut opérer sur plusieurs <b>sémantiques</b>. Le bot écoute sur un ou plusieurs channels, par exemple un serveur web, un shell local, Gtalk (madtewn2@gmail.com !) ou un canal IRC. Une fois un message reçu, le message va passer à travers les étapes suivantes:
+    <ol>
+    <li>le bot va tout d'abord traduire le message dans plusieurs sémantiques. La sémantique de base, ou "raw", est le message reçu original. Les autres sémantiques vont abstraire successivement le message, exemple: "le chat" =&gt; "chat" =&gt; "animal". Cf. <a href="#SemanticsModule">SemanticsModule</a></li>
+    <li>le bot va inspecter les règles qu'il connait. Les regles sont des expressions régulières augmentées applicable sur le message dans une des sémantiques. Une unique règle est choisie en fonction de sa pertinence. Voir le module <a href="#AnswerModule">AnswerModule</a>.</li>
+    <li>une fois la règle choisie, l'action de la règle va être exécutée. L'action d'une règle est une instruction python évaluée dynamiquement, qui a accès à l'ensembles des fonctions des modules du bot, ainsi qu'à un dictionnaire de valeurs. Plus d'infos dans <a href="#EvalModule">EvalModule</a>.</li>
+    <li>toute l'intelligence du bot réside dans les fonctions exportées par les modules. Pour une liste exhaustive, regarder à la suite de ce document, et notamment le module <a href="#PluginsModule">PluginsModule</a>.</li>
+    </ol>
+</p>
+<h3>Mini tutoriel</h3>
+<p>
+Il existe deux manières d'améliorer le bot: une manière "offline", en ecrivant des plugins qui exporteront des fonctions qui seront appelables depuis les règles. Mais la manière la plus simple est d'écrire de nouvelles règles, utilisant les fonctions existantes. Ecrire des règles peut se faire directement en parlant au bot, vous trouvez la liste des règles de ce bot dans la doc du module <a href="#AnswerModule">AnswerModule</a>, plus bas dans ce document. Nous présentons ici un rapide tutoriel:
+    <dl>
+    <dt><b>Règle simple:</b></dt>
+    <dd>Syntaxe d'une règle: !learn <i>sem</i>,<i>prio</i>,<i>match</i>, <i>action</i>.<br/>Paramètres: <i>sem</i> in (RAW,CLEAN), 0&lt;=<i>prio</i>&lt;=100, <i>match</i> est une expression  régulière, <i>action</i> est du code python évalué à l'exécution de la règle.
+    <pre>
+    !learn RAW,15,'io','bonjour' 
+    &gt; io mad2n ! 
+    &gt; bonjour 
+    </pre></dd>
+    <dt><b>Action python:</b></dt>
+    <dd>La partie action de la règle est du code python
+    <pre>
+    !learn RAW,98,'salut','bonjour'.encode("rot13") 
+    &gt; salut 
+    &gt; obawbhe
+    </pre></dd>
+    <dt><b>Variables:</b></dt>
+    <dd>On peut acceder à des variables dans la partie action de la règle, dont certaines prédéfinies (nick, arg1,arg2,...)
+    <pre>
+    !set "r",1  <i>//Il existe une règle qui simplifie la syntaxe de set: !r=1</i>
+    !learn RAW,26,'salut','bonjour %s, r vaut %s' % (nick,r)
+    &gt; salut 
+    &gt; bonjour kaze, r vaut 1
+    </pre></dd>
+    <dt><b>Sous-groupes:</b></dt>
+    <dd>Des match-groups peuvent être utilisés dans la règles via $1...$n. Ils sont accessibles dans la partie action de la règle via arg1...argn.
+    <pre>
+    !learn RAW,99,'magie $1={[a-z]*}','tada: %s' % arg1.upper()
+    &gt; magie toto 
+    &gt; tada: TOTO
+    </pre></dd>
+    <dt><b>Fonctions:</b></dt>
+    <dd>Toutes les fonctions du bot sont accessibles depuis la partie action de la règle, ainsi que certain fonctions python de base comme map ou str. La liste des fonction du bot est présentée dans ce document.
+    <pre>
+    !learn RAW,2,'$1={\\w+} ou $2={\\w+}[ ]*?','je choisis %s' % random.choice([arg1,arg2]) 
+    &gt; slip ou caleçon ?
+    &gt; je choisis slip
+    </pre>
+    A noter la règle spéciale d'id 0 qui permet d'appeler depuis el chan n'importe quelle fonction du bot: <tt>(0, 100, '^!$1={[a-zA-Z][a-zA-Z0-9_]*}[ ]*$2={.*}$', call_format(arg1,arg2))</tt>. Elle est utilisée quand on tappe "!learn...".
+    </dd>
+    </dl>
+</p>
+<p>
+C'est tout pour ce mini-tuto.
+Pour plus de détails, je vous invite à consulter la documentation des modules présentée ci-dessous.
+</p>
+
+<h3>Utiliser le bot</h3>
+<h4>Ligne de commande</h4>
+TODO: options de la ligne de commande
+<h4>Les channels</h4>
+<h4>Les 3 commandes de base</h4>
+
+<h3>Configurer le bot</h3>
+<h4>Les fichiers de configuration</h4>
+<h4>Les fichiers de connaissance</h4>
+<h4>Personnalisation du bot</h4>
+<h4>Développer de nouveaux plugins</h4>
+
+<h3>Contribuer</h3>
+
+<h2>Description des plugins</h2>
