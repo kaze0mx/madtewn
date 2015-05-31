@@ -11,7 +11,7 @@ NB_GROUPS=3
 default_rules= { 
         0 : (0, 100, '^!$1={[a-zA-Z][a-zA-Z0-9_]*}[ ]*=$2={.*}$', Code('assign(arg1,eval(arg2))')),
         1 : (0, 100, '^!p $1={.*}$', Code('eval(arg1)')),
-        2 : (0, 100, '^!help', Code("'RTFM: http://rhino9.fr:5555'")),
+        2 : (0, 100, '^!help', Code("'RTFM: http://localhost:5555'")),
         3 : (0, 100, '^!$1={[a-zA-Z][a-zA-Z0-9_]*}[ ]*$2={.*}$', Code('call_format(arg1,arg2)')),
 }
 
